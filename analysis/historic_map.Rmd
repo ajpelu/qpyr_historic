@@ -1,0 +1,124 @@
+---
+title: "Distribution of Q. pyrenaica forests "
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: fill
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+library('flexdashboard')
+```
+
+```{r pacakges, message=FALSE, warning=FALSE}
+library('rgdal')
+library("leaflet") 
+library("sp")
+library("raster")
+library("dplyr")
+```
+
+
+
+```{r readData}
+machine <- 'ajpelu' 
+# machine <- 'ajpeluLap' 
+
+di <- paste('/Users/', machine, '/Dropbox/phd/phd_repos/qpyr_distribution', sep='')
+
+# Read spatial data 
+qp<- rgdal::readOGR(dsn=paste0(di,'/data_raw/geoinfo/'),
+                     layer = 'q_pyr_sn_4326', verbose = FALSE, encoding = "UTF-8")
+
+### --- Read limits of Sierra Nevada Protected area
+mydsn = paste0('/Users/', machine, '/Dropbox/carto_public/EENNPP/InfGeografica/InfVectorial/Shapes/ED50_30')
+enp <- readOGR(dsn=mydsn, layer = 'EENNPP', encoding="UTF-8", verbose = FALSE)
+proj4string(enp) <- CRS("+init=epsg:23030")
+
+# Sierra Nevada limits 
+enp_r <- spTransform(enp, CRS("+init=epsg:4326"))
+
+# Select Sierra Nevada 
+sn <- subset(enp_r, NOMBRE == 'SIERRA NEVADA' & FIGURA == 'Espacio Natural')
+sn_nat <- subset(enp_r, NOMBRE == 'SIERRA NEVADA' & FIGURA == 'Parque Nacional')
+
+
+# Read modis iv pixels 
+modis_iv <- rgdal::readOGR(dsn=paste0(di, '/data_raw/geoinfo/'),
+                     layer = 'iv_malla_modis_qp_pol', verbose = FALSE, encoding = "UTF-8")
+
+# Read irrigation channel 
+acequias <- rgdal::readOGR(dsn=paste0(di, '/data_raw/geoinfo/'),
+                           layer = 'acequias_pn_snevada', verbose = FALSE,
+                           encoding = 'UTF-8') 
+
+acequias_r <- spTransform(acequias, crs(enp_r))
+```
+
+
+```{r}
+# Set spatial extension 
+myext <- extent(qp)
+
+mymap <- leaflet() %>%
+  fitBounds(myext@xmin, myext@ymin, myext@xmax, myext@ymax) %>% 
+  addWMSTiles('http://www.ideandalucia.es/wms/mdt_2005?',
+              layers = 'Sombreado_10',
+              options = WMSTileOptions(format = "image/png", transparent = TRUE),
+              attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografia" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>', 
+              group = 'Hillshade') %>% 
+  addTiles(urlTemplate = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+           attribution = '<a href="https://carto.com/attributions">CARTO</a>',
+           group = 'Basemap') %>%
+
+  addWMSTiles('http://www.ideandalucia.es/services/toporaster10/wms?',
+              layers = 'toporaster10',
+              options = WMSTileOptions(format = "image/png", transparent = FALSE),
+              attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografia" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>',
+              group = 'Topographical') %>%
+
+  addProviderTiles("Esri.WorldImagery", group='Satellite') %>%
+
+  # Layers control
+  addLayersControl(position = 'bottomright',
+                   baseGroups = c("Hillshade", "Basemap", "Topographical", "Satellite"),
+                   overlayGroups = c('Irrigation Channels',
+                                     'Natural Protected Area', 
+                                     'Quercus pyrenaica forests',
+                                     'MOD13Q1 pixels'),
+                   options = layersControlOptions(collapsed = TRUE))
+
+
+```
+
+
+Distribution map
+=======================================================================
+
+```{r}
+popup_qp <- paste0("<strong>Population id:</strong> ", qp$POBLACION,
+                   "<br><strong>Name:</strong> ", qp$LOCALIDAD,
+                   "<br><strong>Valley:</strong> ", qp$VALLE)
+
+popup_iv <- paste0("<strong>Pixel id:</strong> ", modis_iv$id)
+
+popup_acequia <- paste0("<strong>Code:</strong> ", acequias_r$COD_ACEQUI,
+                   "<br><strong>Name:</strong> ", acequias_r$NOM_ACEQUI)
+
+mymap %>% 
+  addPolylines(data=acequias_r, color='blue', 
+               group='Irrigation Channels', weight= 3,
+               popup = popup_acequia) %>%
+  addPolygons(data = modis_iv,
+              group = 'MOD13Q1 pixels',
+              fillColor = 'green', fillOpacity = 0.4, color = 'green', 
+                stroke = TRUE, popup = popup_iv) %>% 
+  addPolygons(data = qp,
+                group= 'Quercus pyrenaica forests',
+                fillColor = 'red', fillOpacity = 0.4, 
+                stroke = FALSE, popup = popup_qp) %>% 
+  addPolygons(data = sn, 
+              group = 'Natural Protected Area',
+              fill=FALSE, color = 'red', weight=2.5) 
+```
+
