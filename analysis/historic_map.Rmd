@@ -16,23 +16,24 @@ library("leaflet")
 library("sp")
 library("raster")
 library("dplyr")
+library("here")
 ```
-
 
 
 ```{r readData}
 machine <- 'ajpelu' 
 # machine <- 'ajpeluLap' 
 
-di <- paste('/Users/', machine, '/Dropbox/phd/phd_repos/qpyr_distribution', sep='')
+di <- here() 
 
 # Read spatial data 
-qp<- rgdal::readOGR(dsn=paste0(di,'/data_raw/geoinfo/'),
+qp <- rgdal::readOGR(dsn=paste0(di,'/data/dist_robledal/'),
                      layer = 'q_pyr_sn_4326', verbose = FALSE, encoding = "UTF-8")
 
 ### --- Read limits of Sierra Nevada Protected area
-mydsn = paste0('/Users/', machine, '/Dropbox/carto_public/EENNPP/InfGeografica/InfVectorial/Shapes/ED50_30')
+mydsn = paste0('/Users/', machine, '/Google Drive/carto_public/EENNPP/InfGeografica/InfVectorial/Shapes/ED50_30')
 enp <- readOGR(dsn=mydsn, layer = 'EENNPP', encoding="UTF-8", verbose = FALSE)
+
 proj4string(enp) <- CRS("+init=epsg:23030")
 
 # Sierra Nevada limits 
@@ -41,18 +42,40 @@ enp_r <- spTransform(enp, CRS("+init=epsg:4326"))
 # Select Sierra Nevada 
 sn <- subset(enp_r, NOMBRE == 'SIERRA NEVADA' & FIGURA == 'Espacio Natural')
 sn_nat <- subset(enp_r, NOMBRE == 'SIERRA NEVADA' & FIGURA == 'Parque Nacional')
+```
 
 
-# Read modis iv pixels 
-modis_iv <- rgdal::readOGR(dsn=paste0(di, '/data_raw/geoinfo/'),
-                     layer = 'iv_malla_modis_qp_pol', verbose = FALSE, encoding = "UTF-8")
 
-# Read irrigation channel 
-acequias <- rgdal::readOGR(dsn=paste0(di, '/data_raw/geoinfo/'),
+
+```{r}
+# Irrigation channel
+acequias <- rgdal::readOGR(dsn=paste0(di, '/data/acequias/'),
                            layer = 'acequias_pn_snevada', verbose = FALSE,
                            encoding = 'UTF-8') 
 
 acequias_r <- spTransform(acequias, crs(enp_r))
+```
+
+
+```{r}
+# Read modis iv pixels
+modis_iv <- rgdal::readOGR(dsn=paste0(di, '/data/ndvi_modis/'),
+                     layer = 'iv_malla_modis_qp_pol', verbose = FALSE, encoding = "UTF-8")
+```
+
+```{r}
+# Incendios 
+
+## Histórico REDIAM 1975 - 2016 
+# http://www.juntadeandalucia.es/medioambiente/site/rediam/menuitem.04dc44281e5d53cf8ca78ca731525ea0/?vgnextoid=d07e1cd522a3d310VgnVCM2000000624e50aRCRD&vgnextchannel=1bff7d087270f210VgnVCM1000001325e50aRCRD 
+
+fires <- rgdal::readOGR(dsn=paste0(di, '/data/incendios/rediam/'),
+                     layer = 'incendios_historico', verbose = FALSE, encoding = "UTF-8")
+
+
+# WMS REDIAM
+http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_incendios?   
+http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_areas_recorridas_fuego? 
 ```
 
 
@@ -78,14 +101,14 @@ mymap <- leaflet() %>%
               group = 'Topographical') %>%
 
   addProviderTiles("Esri.WorldImagery", group='Satellite') %>%
-
   # Layers control
   addLayersControl(position = 'bottomright',
                    baseGroups = c("Hillshade", "Basemap", "Topographical", "Satellite"),
                    overlayGroups = c('Irrigation Channels',
                                      'Natural Protected Area', 
                                      'Quercus pyrenaica forests',
-                                     'MOD13Q1 pixels'),
+                                     'MOD13Q1 pixels',
+                                     "incendios"),
                    options = layersControlOptions(collapsed = TRUE))
 
 
@@ -105,17 +128,23 @@ popup_iv <- paste0("<strong>Pixel id:</strong> ", modis_iv$id)
 popup_acequia <- paste0("<strong>Code:</strong> ", acequias_r$COD_ACEQUI,
                    "<br><strong>Name:</strong> ", acequias_r$NOM_ACEQUI)
 
+popup_fires <- paste0("<strong>Fecha:</strong> ", fires$FECHA)
+
 mymap %>% 
   addPolylines(data=acequias_r, color='blue', 
                group='Irrigation Channels', weight= 3,
                popup = popup_acequia) %>%
   addPolygons(data = modis_iv,
               group = 'MOD13Q1 pixels',
-              fillColor = 'green', fillOpacity = 0.4, color = 'green', 
-                stroke = TRUE, popup = popup_iv) %>% 
+              fillColor = 'green', fillOpacity = 0.4, color = 'green',
+                stroke = TRUE, popup = popup_iv) %>%
   addPolygons(data = qp,
                 group= 'Quercus pyrenaica forests',
                 fillColor = 'red', fillOpacity = 0.4, 
+                stroke = FALSE, popup = popup_qp) %>% 
+  addPolygons(data = fires,
+                group= 'incendios',
+                fillColor = 'orange', fillOpacity = 0.4, 
                 stroke = FALSE, popup = popup_qp) %>% 
   addPolygons(data = sn, 
               group = 'Natural Protected Area',
