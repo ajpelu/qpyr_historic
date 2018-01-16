@@ -56,6 +56,16 @@ acequias <- rgdal::readOGR(dsn=paste0(di, '/data/acequias/'),
 acequias_r <- spTransform(acequias, crs(enp_r))
 ```
 
+```{r}
+# BBDD Forestal
+forestal <- rgdal::readOGR(dsn=paste0(di, '/data/bbdd_forestal/'),
+                           layer = 'proy_forestales', verbose = FALSE,
+                           encoding = 'UTF-8') 
+proj4string(forestal) <- CRS("+init=epsg:23030")
+
+forestal_r <- spTransform(forestal, crs(enp_r))
+```
+
 
 ```{r}
 # Read modis iv pixels
@@ -108,7 +118,8 @@ mymap <- leaflet() %>%
                                      'Natural Protected Area', 
                                      'Quercus pyrenaica forests',
                                      'MOD13Q1 pixels',
-                                     "incendios"),
+                                     "incendios", 
+                                     "Actuaciones Forestales"),
                    options = layersControlOptions(collapsed = TRUE))
 
 
@@ -129,6 +140,7 @@ popup_acequia <- paste0("<strong>Code:</strong> ", acequias_r$COD_ACEQUI,
                    "<br><strong>Name:</strong> ", acequias_r$NOM_ACEQUI)
 
 popup_fires <- paste0("<strong>Fecha:</strong> ", fires$FECHA)
+popup_forestal <- paste0("<strong>Proyecto:</strong> ", forestal_r$cod_proyec)
 
 mymap %>% 
   addPolylines(data=acequias_r, color='blue', 
@@ -146,6 +158,10 @@ mymap %>%
                 group= 'incendios',
                 fillColor = 'orange', fillOpacity = 0.4, 
                 stroke = FALSE, popup = popup_fires) %>% 
+  addPolygons(data = forestal_r,
+                group= 'Actuaciones Forestales',
+                fillColor = 'blue', fillOpacity = 0.4, 
+                stroke = FALSE, popup = popup_forestal) %>% 
   addPolygons(data = sn, 
               group = 'Natural Protected Area',
               fill=FALSE, color = 'red', weight=2.5) 
