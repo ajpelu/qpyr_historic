@@ -69,13 +69,13 @@ modis_iv <- rgdal::readOGR(dsn=paste0(di, '/data/ndvi_modis/'),
 ## Histórico REDIAM 1975 - 2016 
 # http://www.juntadeandalucia.es/medioambiente/site/rediam/menuitem.04dc44281e5d53cf8ca78ca731525ea0/?vgnextoid=d07e1cd522a3d310VgnVCM2000000624e50aRCRD&vgnextchannel=1bff7d087270f210VgnVCM1000001325e50aRCRD 
 
-fires <- rgdal::readOGR(dsn=paste0(di, '/data/incendios/rediam/'),
+fires_raw <- rgdal::readOGR(dsn=paste0(di, '/data/incendios/rediam/'),
                      layer = 'incendios_historico', verbose = FALSE, encoding = "UTF-8")
-
+fires <- spTransform(fires_raw, crs(enp_r))
 
 # WMS REDIAM
-http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_incendios?   
-http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_areas_recorridas_fuego? 
+# http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_incendios?   
+# http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_areas_recorridas_fuego? 
 ```
 
 
@@ -145,7 +145,7 @@ mymap %>%
   addPolygons(data = fires,
                 group= 'incendios',
                 fillColor = 'orange', fillOpacity = 0.4, 
-                stroke = FALSE, popup = popup_qp) %>% 
+                stroke = FALSE, popup = popup_fires) %>% 
   addPolygons(data = sn, 
               group = 'Natural Protected Area',
               fill=FALSE, color = 'red', weight=2.5) 
