@@ -22,7 +22,7 @@ library("here")
 
 ```{r readData}
 machine <- 'ajpelu' 
-# machine <- 'ajpeluLap' 
+machine <- 'ajpeluLap' 
 
 di <- here() 
 
@@ -109,11 +109,22 @@ mymap <- leaflet() %>%
               options = WMSTileOptions(format = "image/png", transparent = FALSE),
               attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografia" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>',
               group = 'Topographical') %>%
+  addWMSTiles('http://www.ideandalucia.es/wms/mta10r_2001-2013?',
+              layers = 'mta10r_2001-2013',
+              options = WMSTileOptions(format = "image/png", transparent = FALSE),
+              attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografia" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>',
+              group = 'topo2013') %>% 
+  
+    addWMSTiles('http://www.ideandalucia.es/wms/mta10v_2007?',
+              layers = 'mta10v_2007',
+              options = WMSTileOptions(format = "image/png", transparent = FALSE),
+              attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografia" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>',
+              group = 'topo2007') %>% 
 
   addProviderTiles("Esri.WorldImagery", group='Satellite') %>%
   # Layers control
   addLayersControl(position = 'bottomright',
-                   baseGroups = c("Hillshade", "Basemap", "Topographical", "Satellite"),
+                   baseGroups = c("Hillshade", "Basemap", "Topographical", "Satellite", "topo2013", "topo2007"),
                    overlayGroups = c('Irrigation Channels',
                                      'Natural Protected Area', 
                                      'Quercus pyrenaica forests',
