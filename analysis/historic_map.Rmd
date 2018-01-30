@@ -17,12 +17,14 @@ library("sp")
 library("raster")
 library("dplyr")
 library("here")
+library("mapview")
+library("maptools")
 ```
 
 
 ```{r readData}
 machine <- 'ajpelu' 
-machine <- 'ajpeluLap' 
+# machine <- 'ajpeluLap' 
 
 di <- here() 
 
@@ -88,6 +90,19 @@ fires <- spTransform(fires_raw, crs(enp_r))
 # http://www.juntadeandalucia.es/medioambiente/mapwms/REDIAM_historico_areas_recorridas_fuego? 
 ```
 
+```{r}
+# Field Work
+
+## Dendro
+dendro_ca_path <- paste0(di, '/data/field_work/dendro/dendro_ca.GPX')
+dendro_sj_path <- paste0(di, '/data/field_work/dendro/dendro_sj.GPX')
+
+dendroCA <- readOGR(dendro_ca_path, layer = "waypoints", verbose = FALSE)
+dendroSJ <- readOGR(dendro_sj_path, layer = "waypoints", verbose = FALSE)
+
+dendro <- spRbind(dendroCA, dendroSJ)
+```
+
 
 ```{r}
 # Set spatial extension 
@@ -130,7 +145,8 @@ mymap <- leaflet() %>%
                                      'Quercus pyrenaica forests',
                                      'MOD13Q1 pixels',
                                      "incendios", 
-                                     "Actuaciones Forestales"),
+                                     "Actuaciones Forestales", 
+                                     "Dendro2016"),
                    options = layersControlOptions(collapsed = TRUE))
 
 
@@ -152,6 +168,7 @@ popup_acequia <- paste0("<strong>Code:</strong> ", acequias_r$COD_ACEQUI,
 
 popup_fires <- paste0("<strong>Fecha:</strong> ", fires$FECHA)
 popup_forestal <- paste0("<strong>Proyecto:</strong> ", forestal_r$cod_proyec)
+popup_dendro <- paste0("<strong>Plot id:</strong> ", dendro$name)
 
 mymap %>% 
   addPolylines(data=acequias_r, color='blue', 
@@ -175,6 +192,11 @@ mymap %>%
                 stroke = FALSE, popup = popup_forestal) %>% 
   addPolygons(data = sn, 
               group = 'Natural Protected Area',
-              fill=FALSE, color = 'red', weight=2.5) 
+              fill=FALSE, color = 'red', weight=2.5) %>% 
+  addCircles(data = dendro, 
+             group = 'Dendro2016',
+             lng=coordinates(dendro)[,'coords.x1'], 
+             lat=coordinates(dendro)[,'coords.x2'],
+             fill=FALSE, color = 'red', weight=1.5, popup = popup_dendro)
 ```
 
