@@ -14,6 +14,7 @@ library('flexdashboard')
 library('rgdal')
 library("leaflet") 
 library("sp")
+library("sf")
 library("raster")
 library("dplyr")
 library("here")
@@ -24,7 +25,7 @@ library("maptools")
 
 ```{r readData}
 machine <- 'ajpelu' 
-# machine <- 'ajpeluLap' 
+machine <- 'ajpeluLap' 
 
 di <- here() 
 
@@ -101,6 +102,35 @@ dendroCA <- readOGR(dendro_ca_path, layer = "waypoints", verbose = FALSE)
 dendroSJ <- readOGR(dendro_sj_path, layer = "waypoints", verbose = FALSE)
 
 dendro <- spRbind(dendroCA, dendroSJ)
+
+
+#### ----- To join the two sites and save as shape 
+# not run 
+# fw <- dendro[,'name']
+# 
+# low_ca<- c('B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B09', 'B10',
+#          'B26', 'B27', 'B28', 'B29', 'B30')
+# low_sj <- c('A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10')
+# high_sj<- c('A11', 'A12', 'A13', 'A14', 'A15', 'A16', 'A17', 'A18', 'A19', 'A20')
+# high_ca <- c('B11', 'B12', 'B13', 'B14', 'B15', 'B16', 'B17', 'B18', 'B19', 'B20',
+#            'B21', 'B22', 'B23', 'B24', 'B25')
+# 
+# 
+# # Create variable site 
+# fw@data$site <- ifelse(fw@data$name %in% low_sj, 'SJ', 
+#                        ifelse(fw@data$name %in% high_sj, 'SJ',
+#                               ifelse(fw@data$name %in% low_ca, 'CA-Low', 'CA-High')))
+# # Variable Loc
+# ca <- c(low_ca, high_ca)
+# fw@data$loc <- ifelse(fw@data$name %in% ca, "CA", "SJ")
+# 
+# # Convert to sf 
+# dendro_sf <- st_as_sf(fw)
+# 
+# # Export data as shapefile 
+# dendro_path <- paste0(di, '/data/field_work/dendro/dendro_sf.shp')
+# 
+# sf::st_write(dendro_sf, dsn = dendro_path, layer = "dendro.shp", driver = "ESRI Shapefile")
 ```
 
 
