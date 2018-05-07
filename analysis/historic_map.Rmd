@@ -25,7 +25,7 @@ library("maptools")
 
 ```{r readData}
 machine <- 'ajpelu' 
-machine <- 'ajpeluLap' 
+# machine <- 'ajpeluLap' 
 
 di <- here() 
 
@@ -57,6 +57,12 @@ acequias <- rgdal::readOGR(dsn=paste0(di, '/data/acequias/'),
                            encoding = 'UTF-8') 
 
 acequias_r <- spTransform(acequias, crs(enp_r))
+
+acequiasMemola <- rgdal::readOGR(dsn=paste0(di, '/data/acequias/'),
+                           layer = 'acequias_memola_sn', verbose = FALSE,
+                           encoding = 'UTF-8') 
+acequiasMemolar <- spTransform(acequiasMemola, crs(enp_r))
+
 ```
 
 ```{r}
@@ -171,6 +177,7 @@ mymap <- leaflet() %>%
   addLayersControl(position = 'bottomright',
                    baseGroups = c("Hillshade", "Basemap", "Topographical", "Satellite", "topo2013", "topo2007"),
                    overlayGroups = c('Irrigation Channels',
+                                     'Acequias (MEMOLA)',
                                      'Natural Protected Area', 
                                      'Quercus pyrenaica forests',
                                      'MOD13Q1 pixels',
@@ -200,7 +207,19 @@ popup_fires <- paste0("<strong>Fecha:</strong> ", fires$FECHA)
 popup_forestal <- paste0("<strong>Proyecto:</strong> ", forestal_r$cod_proyec)
 popup_dendro <- paste0("<strong>Plot id:</strong> ", dendro$name)
 
+colAcequias <- colorFactor(c("Dark blue", "#ff7f00", "#1f78b4", "#a6cee3"),
+                           acequiasMemolar$Tipolog..a)
+popup_acequiaMemola <- paste0("<strong>Cod:</strong> ", acequiasMemolar$Codigo_ace,
+                        "<br><strong>Nombre:</strong> ", acequiasMemolar$Nombre,
+                        "<br><strong>Tipo:</strong> ", acequiasMemolar$Tipolog..a,
+                        "<br><strong>Estado:</strong> ", acequiasMemolar$Estado_ace,
+                        "<br><strong>Origen Info:</strong> ", acequiasMemolar$Origen_dat)
+
+
 mymap %>% 
+  addPolylines(data=acequiasMemolar, color=colAcequias(acequiasMemolar$Tipolog..a), 
+               group='Acequias (MEMOLA)', weight= 3,
+               popup = popup_acequiaMemola) %>%
   addPolylines(data=acequias_r, color='blue', 
                group='Irrigation Channels', weight= 3,
                popup = popup_acequia) %>%
