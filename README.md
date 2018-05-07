@@ -13,4 +13,4 @@ See [map](https://rawgit.com/ajpelu/qpyr_historic/master/analysis/historic_map.h
 This repository is licenced as Creative Commons Attribution 4.0 ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)). You can find more info [here](/LICENSE). Anyone can use the content of the repository citing as followging:
 
 * Pérez-Luque AJ (2017). Quercus pyrenaica at Sierra Nevada: geoinformation. ![](https://img.shields.io/badge/version-1.0.0-green.svg). [https://github.com/ajpelu/qpyr_historic](https://github.com/ajpelu/qpyr_historic) 
- 
+
