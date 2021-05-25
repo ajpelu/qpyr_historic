@@ -1,6 +1,8 @@
 # Geoinformation about *Quercus pyrenaica* at Sierra Nevada 
 
-See [map](https://rawgit.com/ajpelu/qpyr_historic/master/analysis/historic_map.html)
+[![DOI](https://zenodo.org/badge/117563374.svg)](https://zenodo.org/badge/latestdoi/117563374) 
+
+This repo compiles several geospatial information about *Quercus pyrenaica* forests at Sierra Nevada (southern Spain). You can view the [map](https://rawgit.com/ajpelu/qpyr_historic/master/analysis/historic_map.html) 
 
 # More info:
 * [@ajpelu](https://twitter.com/ajpelu)
